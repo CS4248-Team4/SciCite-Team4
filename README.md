@@ -4,4 +4,4 @@ This repository contains the dataset and code to address the classification task
 
 Aim: Given an input citation sentence (“context”), classify its intent as one among {background, method, comparison}.
 
-For details on approach, refer to our report that is also included in the repository.
+For details on the approach, refer to our report that is included in the repository.
