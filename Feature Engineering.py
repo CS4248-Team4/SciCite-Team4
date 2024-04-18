@@ -1,39 +1,25 @@
 import numpy as np
-# import pandas as pd
+import pandas as pd
 import re
 import jsonlines
 import collections
 
-# from gensim.models import Word2Vec
-# from gensim.models.doc2vec import Doc2Vec
-# from gensim.models.doc2vec import TaggedDocument
+from gensim.models import Word2Vec
+from gensim.models.doc2vec import Doc2Vec
+from gensim.models.doc2vec import TaggedDocument
 from nltk.tokenize import word_tokenize
 import matplotlib.pyplot as plt
 
-# from sklearn.metrics import f1_score, accuracy_score
-# from sklearn.linear_model import LogisticRegression
-
-# def vectorise(x, w2v_model):
-#     x_vec = []
-#     words = set(w2v_model.wv.index_to_key)
-#     for x_s in x:
-#         s_vec = [w2v_model.wv[token] for token in x_s if token in words]
-#         if len(s_vec) == 0:
-#             x_vec.append(np.zeros(100))
-#         else:
-#             x_vec.append(np.mean(s_vec, axis=0))
-#     return np.array(x_vec)
-
-# def train(model, x_train, y_train):
-#     model = model.fit(x_train, y_train)
-
-# def predict(model, x_test):
-#     return model.predict(x_test)
-
-# def evaluate(y_test, y_pred):
-#     score = f1_score(y_test, y_pred, average='macro')
-#     print('f1 score = {}'.format(score))
-#     print('accuracy = %s' % accuracy_score(y_test, y_pred))
+def vectorise(x, w2v_model):
+    x_vec = []
+    words = set(w2v_model.wv.index_to_key)
+    for x_s in x:
+        s_vec = [w2v_model.wv[token] for token in x_s if token in words]
+        if len(s_vec) == 0:
+            x_vec.append(np.zeros(100))
+        else:
+            x_vec.append(np.mean(s_vec, axis=0))
+    return np.array(x_vec)
 
 def process_strings(strings):
     strings_clean, num_citations, length = [], [], []
@@ -215,51 +201,6 @@ def secName_relationship_bar_plotting(total, map_0, map_1, map_2):
     plt.legend()
     plt.show()
 
-    # sorted_items = sorted(map_0.items())
-    # keys = [item[0] for item in sorted_items]
-    # values = [item[1]/total[0] for item in sorted_items]
-    # bar_width = 0.4
-    # indices = np.arange(len(keys))
-    # for i, (category, value) in enumerate(zip(keys, values)):
-    #     plt.bar(indices[i], value, width=bar_width, label=category)
-    #     plt.axvline(x=indices[i] + bar_width / 2, color='black', linewidth=0.5)
-    # plt.xticks(indices + bar_width / 2, keys)
-    # plt.xlabel(name)
-    # plt.ylabel('percentage')
-    # plt.title('P(sectionName|label_0)')
-    # plt.legend()
-    # plt.show()
-
-    # sorted_items = sorted(map_1.items())
-    # keys = [item[0] for item in sorted_items]
-    # values = [item[1]/total[1] for item in sorted_items]
-    # bar_width = 0.4
-    # indices = np.arange(len(keys))
-    # for i, (category, value) in enumerate(zip(keys, values)):
-    #     plt.bar(indices[i], value, width=bar_width, label=category)
-    #     plt.axvline(x=indices[i] + bar_width / 2, color='black', linewidth=0.5)
-    # plt.xticks(indices + bar_width / 2, keys)
-    # plt.xlabel(name)
-    # plt.ylabel('percentage')
-    # plt.title('P(sectionName|label_1)')
-    # plt.legend()
-    # plt.show()
-
-    # sorted_items = sorted(map_2.items())
-    # keys = [item[0] for item in sorted_items]
-    # values = [item[1]/total[2] for item in sorted_items]
-    # bar_width = 0.4
-    # indices = np.arange(len(keys))
-    # for i, (category, value) in enumerate(zip(keys, values)):
-    #     plt.bar(indices[i], value, width=bar_width, label=category)
-    #     plt.axvline(x=indices[i] + bar_width / 2, color='black', linewidth=0.5)
-    # plt.xticks(indices + bar_width / 2, keys)
-    # plt.xlabel(name)
-    # plt.ylabel('percentage')
-    # plt.title('P(sectionName|label_2)')
-    # plt.legend()
-    # plt.show()
-
 def relationship_plotting(total, map_0, map_1, map_2, name):
     sorted_items0 = sorted(map_0.items())
     sorted_items1 = sorted(map_1.items())
@@ -280,6 +221,7 @@ def relationship_plotting(total, map_0, map_1, map_2, name):
     plt.legend()
     plt.show()
 
+
 def main():
     sectionNames, strings, labels, labels_confidence, isKeyCite, cite_len, cite_start = [], [], [], [], [], [], []
     with jsonlines.open('scicite/train.jsonl') as f:
@@ -298,6 +240,7 @@ def main():
     sectionNames = process_sectionNames(sectionNames)   #1 both train & test
     y_train = parse_label2index(labels)
 
+    # analyse dataset features relationship
     relationship_mapping(y_train, sectionNames, "section name")
     relationship_mapping(y_train, isKeyCite, "key citation")
     relationship_mapping(y_train, num_citations, "number of citations")
@@ -306,41 +249,60 @@ def main():
     relationship_mapping(y_train, cite_len, "cite length")
     relationship_mapping(y_train, cite_start, "cite start position")
 
-    # word2vec_model = Word2Vec(sentences=strings, vector_size=100, window=5, min_count=1)
-    # word2vec_model.save('word2vec_model.bin')
-    # word2vec_model = Word2Vec.load('word2vec_model.bin')
+    word2vec_model = Word2Vec(sentences=strings, vector_size=100, window=5, min_count=1)
+    word2vec_model.save('word2vec_model.bin')
+    word2vec_model = Word2Vec.load('word2vec_model.bin')
+    x_train = vectorise(strings, word2vec_model)
 
+    # doc2vec
     # tagged_strings = [TaggedDocument(words=strings[i], tags=str(y_train[i])) for i in range(len(y_train))]
     # doc2vec_model = Doc2Vec(vector_size=100, window=5, min_count=1, epochs=20)
     # doc2vec_model.build_vocab(tagged_strings)
     # doc2vec_model.train(tagged_strings, total_examples=doc2vec_model.corpus_count, epochs=doc2vec_model.epochs)
     # doc2vec_model.save('doc2vec_model.bin')
     # doc2vec_model = Doc2Vec.load('doc2vec_model.bin')
-
     # x_train = [doc2vec_model.infer_vector(i) for i in strings]
-    # x_train = vectorise(strings, word2vec_model)
-    # y_train = parse_label2index(labels)
 
-    # classification_model = LogisticRegression()
-    # train(classification_model, x_train, y_train)
+    sectionNames, strings, labels, labels_confidence, isKeyCite, cite_len, cite_start = [], [], [], [], [], [], []
+    with jsonlines.open('scicite/dev.jsonl') as f:
+        for line in f.iter():
+            sectionNames.append(line['sectionName'])
+            strings.append(re.sub(r'\n', '. ', line['string']))
+            labels.append(line['label'])
+            if 'label_confidence' in line:
+                labels_confidence.append(line['label_confidence'])
+            else:
+                labels_confidence.append(0)
+            isKeyCite.append(line['isKeyCitation'])
+            cite_len.append(line['citeEnd'] - line['citeStart'])
+            cite_start.append(line['citeStart'])
+    strings, num_citations, str_length = process_strings(strings)
+    sectionNames = process_sectionNames(sectionNames)
+    x_val = vectorise(strings, word2vec_model)
+    y_val = parse_label2index(labels)
 
-    # sectionNames, strings, labels = [], [], []
-    # with jsonlines.open('scicite/test.jsonl') as f:
-    #     for line in f.iter():
-    #         # sectionNames.append(line['sectionName'])
-    #         strings.append(re.sub(r'\n', '. ', line['string']))
-    #         labels.append(line['label'])
-    # strings = process_strings(strings)
-    # # sectionNames = process_names(sectionNames)
+    # choose model for training
 
-    # # x_test = vectorise(strings, word2vec_model)
-    # x_test = [doc2vec_model.infer_vector(i) for i in strings]
-    # y_test = parse_label2index(labels)
+    sectionNames, strings, labels, labels_confidence, isKeyCite, cite_len, cite_start = [], [], [], [], [], [], []
+    with jsonlines.open('scicite/test.jsonl') as f:
+        for line in f.iter():
+            sectionNames.append(line['sectionName'])
+            strings.append(re.sub(r'\n', '. ', line['string']))
+            labels.append(line['label'])
+            if 'label_confidence' in line:
+                labels_confidence.append(line['label_confidence'])
+            else:
+                labels_confidence.append(0)
+            isKeyCite.append(line['isKeyCitation'])
+            cite_len.append(line['citeEnd'] - line['citeStart'])
+            cite_start.append(line['citeStart'])
+    strings, num_citations, str_length = process_strings(strings)
+    sectionNames = process_sectionNames(sectionNames)
+    x_test = vectorise(strings, word2vec_model)
+    y_test = parse_label2index(labels)
+    
+    # use chosen model for prediction
 
-    # y_pred = predict(classification_model, x_test)
-    # evaluate(y_test, y_pred)
-
-    # y_pred = parse_index2label(y_pred)
 
 if __name__ == "__main__":
     main()
